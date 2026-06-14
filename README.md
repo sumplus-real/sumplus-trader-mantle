@@ -1,6 +1,6 @@
-# Autonomous Guardrailed Trading Agent
+# Sumplus Trader
 
-> Working title. Public project name: TBD.
+> An autonomous, guardrailed on-chain trading agent.
 
 An autonomous on-chain trading agent that **decides and executes on its own, but cannot exceed
 its leash.** A DeepSeek-driven brain proposes trades; a deterministic guardrail clamps or

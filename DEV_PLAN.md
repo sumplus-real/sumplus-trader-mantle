@@ -1,6 +1,6 @@
 # Dev Plan — Autonomous Guardrailed Trading Agent
 
-Working repo name: `sumplus-trading-agent`. Public hackathon project name: **TBD (Jakob to decide)**.
+Project name: **Sumplus Trader** (public repo handle: `sumplus-trader`).
 
 Targets three track slots with ONE shared core:
 - Mantle "Turing Test Hackathon" — **Trading & Strategy** + **Agentic Economy** tracks. Deadline 2026-06-15 15:59 UTC (~22h). No live trading required: deploy on Mantle + demo + repo + pitch.

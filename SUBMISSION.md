@@ -1,6 +1,6 @@
 # Submission — Mantle Turing Test Hackathon 2026
 
-> Project name: **TBD (working title)**. Tracks: **Trading & Strategy** + **Agentic Economy**.
+> Project: **Sumplus Trader**. Tracks: **Trading & Strategy** + **Agentic Economy**.
 
 ## One-liner
 
