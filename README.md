@@ -11,19 +11,33 @@ and BSC.
 The pitch is not "look at my returns." It is **safe autonomy** — the thing most trading-agent
 demos quietly skip.
 
-## Quickstart
+## Quickstart (runs with NO keys, NO network)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env        # fill in keys (see DEV_PLAN.md)
+pip install -r requirements.txt        # only needed for live mode; demo/tick run on stdlib
 
-# Run the guardrail demo (no keys, no network — proves the safety property)
-python3 -m agent.demo.guardrail_demo
-
-# Run the autonomous loop (paper mode by default; needs DeepSeek + Maria config)
-python3 -m agent.loop
+python3 -m agent.cli demo     # guardrail enforcement demo (allow / clamp / reject)
+python3 -m agent.cli tick     # one autonomous decision cycle, offline
+python3 -m agent.cli chat     # talk to the agent: status, why, pause, resume, set cap, tick
+python3 -m agent.cli loop     # run the autonomous loop forever
 ```
+
+Out of the box the agent runs fully offline: a **MockBrain** (rule-based) stands in for DeepSeek
+and a **MockBackend** stands in for the execution layer, so anyone can clone and run the whole
+thing. Add keys in `.env` to switch to the real DeepSeek brain and live execution.
+
+## Open-source boundary
+
+This agent is open source. The execution layer it calls (Maria) and the DEX router behind it
+(Arsenal) are **hosted services, not included here** — they sit behind `ExecutionBackend`. The
+repo ships only a thin API client (`MariaBackend`) plus an offline `MockBackend`. No backend
+source, no secrets (`.env` is gitignored).
+
+## Modes (`config/strategy.json` → `mode`)
+- `mock` — offline, deterministic fake fills. Default. For demo / CI / judges.
+- `paper` — real quotes from the live backend, no broadcast.
+- `live` — real execution through Maria (which has its own server-side policy gate + signing).
 
 ## Layout
 - `agent/brain/` — DeepSeek V4 decision strategy (the part we built; the model is the engine, the harness is ours)

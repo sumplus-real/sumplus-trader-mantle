@@ -35,21 +35,28 @@ Not "look at my returns." The story is **safe autonomy**: the agent decides and 
 - [ ] **Arsenal**: Mantle DEX skill (Agni/FusionX, chain 5000), get_quote + build_swap_tx. → need `arsenal_skill_id` + real contract addrs. *(delegated to @Sumplus-arsenal)*
 - [ ] **Maria**: add `mantle`/`bsc` to maria-swap chain enum + chain config + Privy-on-Mantle; dry-run execute_swap proves chain_id 5000 tx builds. → need `MARIA_BASE_URL`, a service bearer token, and a delegated-user JWT with `allowed_actions=["swap"]`. *(delegated to @maria)*
 
-### B. Brain (ours — this repo)
-- [ ] `agent/brain/prompt.py` — strategy system prompt + guardrail framing + JSON decision schema
-- [ ] `agent/brain/deepseek_strategy.py` — call DeepSeek V4 (OpenAI-compatible), parse decision, validate
-- [ ] `agent/data/price_feed.py` — market snapshot (CMC API + on-chain quote via Maria get_quote)
+### B. Brain (ours — this repo) — DONE
+- [x] `agent/brain/prompt.py` — strategy system prompt + JSON decision schema
+- [x] `agent/brain/deepseek_strategy.py` — DeepSeek V4 (OpenAI-compatible), parse + validate
+- [x] `agent/brain/mock_brain.py` + `factory.py` — rule-based fallback so it runs with NO key
+- [x] `agent/data/price_feed.py` — snapshot (CMC + live quote; offline mock fallback)
 
-### C. Execution + safety (ours)
-- [ ] `agent/execution/maria_client.py` — A2A client (DONE skeleton; wire token + agent id)
-- [ ] `agent/execution/executor.py` — turn a DECISION into a maria-swap call; paper/live modes
-- [ ] `agent/guardrail/policy.py` — local mirror of the delegation policy (caps, whitelist, drawdown) so the agent self-limits AND so the demo can show a rejection deterministically
-- [ ] `agent/ledger.py` — record every decision + execution (for judges + drawdown tracking)
+### C. Execution + safety (ours) — DONE
+- [x] `agent/execution/backend.py` + `mock_backend.py` + `maria_backend.py` + `factory.py` — open-source seam: offline mock vs hosted Maria client
+- [x] `agent/execution/maria_client.py` — A2A client (correct contract; needs tokens to go live)
+- [x] `agent/execution/executor.py` — mock / paper / live modes
+- [x] `agent/guardrail/policy.py` — whitelist / caps / drawdown / rate (5 tests pass)
+- [x] `agent/ledger.py` — decision + execution log
 
-### D. Identity + loop (ours)
-- [ ] `agent/loop.py` — autonomous tick loop
-- [ ] `agent/identity/register_8004.py` — ERC-8004 registration (BSC for BNB; optional on Mantle)
-- [ ] `agent/demo/guardrail_demo.py` — scripted over-policy-rejection demo
+### D. Identity + loop + chat (ours) — DONE
+- [x] `agent/loop.py` — autonomous tick loop, honours runtime pause + live cap overrides
+- [x] `agent/runtime.py` + `agent/chat.py` — self-contained conversational control surface (status/why/pause/resume/set-cap/tick); no ClawPlus needed
+- [x] `agent/cli.py` — entrypoints demo | tick | loop | chat | register
+- [x] `agent/identity/register_8004.py` — ERC-8004 registration (BSC; ABI TBD-confirm)
+- [x] `agent/demo/guardrail_demo.py` — over-policy-rejection demo
+
+### Still blocked on delegated backends (A) before a REAL on-chain swap
+- [ ] real Mantle swap once Arsenal `arsenal_skill_id` + Maria mantle wiring land + `.env` tokens + funded wallet
 
 ### E. Submission
 - [ ] Real swap on Mantle (deploy proof) with a small amount

@@ -1,9 +1,8 @@
 """Market snapshot for the brain.
 
-Two sources, both honest:
-  - CMC spot prices for context (trend / 24h change).
-  - A live on-chain quote from Maria.get_quote for the actual executable price on the target
-    DEX (this is the price the agent would really get, fees + slippage included).
+Sources:
+  - CMC spot prices for trend context (if CMC_API_KEY set; else a mock spot so the loop runs offline).
+  - A live executable quote from the execution backend (real Maria price, or mock).
 """
 from __future__ import annotations
 
@@ -12,13 +11,21 @@ from typing import Any
 
 import httpx
 
-from agent.execution.maria_client import MariaClient
+from agent.execution.backend import ExecutionBackend
+
+# Offline fallback 24h-change so the mock brain has a signal without a CMC key.
+_MOCK_SPOT = {
+    "MNT": {"price": 0.80, "pct_24h": -4.2},
+    "BNB": {"price": 600.0, "pct_24h": 1.1},
+    "USDC": {"price": 1.0, "pct_24h": 0.0},
+    "USDT": {"price": 1.0, "pct_24h": 0.0},
+}
 
 
 async def cmc_prices(symbols: list[str]) -> dict[str, Any]:
     api_key = os.environ.get("CMC_API_KEY", "")
     if not api_key:
-        return {"_note": "CMC_API_KEY not set; spot prices unavailable"}
+        return {s: _MOCK_SPOT.get(s, {"price": None, "pct_24h": None}) for s in symbols}
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.get(url, headers={"X-CMC_PRO_API_KEY": api_key},
@@ -32,14 +39,14 @@ async def cmc_prices(symbols: list[str]) -> dict[str, Any]:
     return out
 
 
-async def build_snapshot(maria: MariaClient, chain: str, pair: dict, probe_amount: str = "10") -> dict[str, Any]:
-    """pair = {'from': 'USDC', 'to': 'MNT'}. Returns a snapshot dict for the brain."""
+async def build_snapshot(backend: ExecutionBackend, chain: str, pair: dict,
+                         probe_amount: str = "10") -> dict[str, Any]:
     snapshot: dict[str, Any] = {"chain": chain, "pair": pair}
     snapshot["spot"] = await cmc_prices(sorted({pair["from"], pair["to"]}))
     try:
-        snapshot["live_quote"] = await maria.get_quote(
+        snapshot["live_quote"] = await backend.get_quote(
             chain=chain, from_token=pair["from"], to_token=pair["to"], amount=probe_amount,
         )
-    except Exception as e:  # quote failures must not crash the loop
+    except Exception as e:
         snapshot["live_quote"] = {"error": str(e)}
     return snapshot

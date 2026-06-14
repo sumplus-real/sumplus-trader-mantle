@@ -11,11 +11,12 @@ from typing import Any
 
 from openai import AsyncOpenAI
 
+from agent.brain.base import Brain
 from agent.brain.prompt import SYSTEM_PROMPT, build_user_prompt
 from agent.types import Decision
 
 
-class DeepSeekBrain:
+class DeepSeekBrain(Brain):
     def __init__(self, model: str | None = None, api_key: str | None = None, base_url: str | None = None):
         self.model = model or os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
         self.client = AsyncOpenAI(
