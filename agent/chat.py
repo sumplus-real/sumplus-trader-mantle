@@ -41,10 +41,12 @@ def _recent(events: set[str], n: int = 5) -> list[dict]:
 
 
 def _status() -> str:
+    from agent import portfolio
     st = runtime.load()
     flag = "PAUSED" if st.get("paused") else "RUNNING"
+    pf = portfolio.snapshot()
     last = _recent({"decision"}, 3)
-    lines = [f"Status: {flag} | portfolio ${st['portfolio_value_usd']:.2f}"]
+    lines = [f"Status: {flag} | portfolio ${pf['value_usd']:.2f} | drawdown {pf['drawdown_pct']:.2f}% (cap {CFG['risk']['max_drawdown_pct']}%)"]
     if last:
         lines.append("Recent decisions:")
         for e in last:

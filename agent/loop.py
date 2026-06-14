@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from agent import ledger, runtime
+from agent import ledger, portfolio, runtime
 from agent.brain.base import Brain
 from agent.brain.factory import make_brain
 from agent.data.price_feed import build_snapshot
@@ -44,9 +44,11 @@ def _policy_summary(cfg: dict) -> dict:
 
 
 async def tick(brain: Brain, backend: ExecutionBackend, execu: Executor,
-               *, portfolio_value_usd: float, drawdown_pct: float = 0.0) -> list[dict]:
+               *, portfolio_value_usd: float) -> list[dict]:
     cfg = _effective_cfg()
     guard = Guardrail(cfg)
+    # Real drawdown from the portfolio high-water mark (live: moves with wallet value; mock: static → 0).
+    drawdown_pct = portfolio.update_and_drawdown(portfolio_value_usd)
     enabled = [c for c, v in cfg["chains"].items() if v.get("enabled")]
     results: list[dict] = []
     for pair in cfg["allowed_pairs"]:
