@@ -1,0 +1,30 @@
+{
+  "_comment": "Hard risk guardrails. The brain (DeepSeek) proposes; these bounds clamp. The SAME caps are also enforced server-side by Maria's delegation policy — this file is the agent's self-limit + the deterministic source for the guardrail demo.",
+
+  "mode": "paper",
+
+  "chains": {
+    "mantle": { "chain_id": 5000, "enabled": true },
+    "bsc":    { "chain_id": 56,   "enabled": false }
+  },
+
+  "allowed_pairs": [
+    { "chain": "mantle", "from": "USDC", "to": "MNT" },
+    { "chain": "mantle", "from": "MNT",  "to": "USDC" }
+  ],
+
+  "allowed_tokens": ["USDC", "USDT", "MNT", "WMNT", "BNB", "WBNB"],
+
+  "risk": {
+    "max_single_trade_usd": 50,
+    "max_position_pct": 0.30,
+    "max_trades_per_hour": 4,
+    "max_drawdown_pct": 8.0,
+    "min_trade_interval_seconds": 300,
+    "default_slippage_bps": 50
+  },
+
+  "loop": {
+    "tick_seconds": 300
+  }
+}
