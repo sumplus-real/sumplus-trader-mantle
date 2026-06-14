@@ -38,6 +38,11 @@ def main(argv: list[str] | None = None) -> int:
     elif cmd == "chat":
         from agent.chat import repl
         repl()
+    elif cmd == "web":
+        import uvicorn
+        port = int(args[1]) if len(args) > 1 else 8800
+        print(f"Open http://127.0.0.1:{port}")
+        uvicorn.run("agent.web:app", host="127.0.0.1", port=port, log_level="warning")
     elif cmd == "register":
         from agent.identity.register_8004 import register, REGISTRY_BSC
         import os
