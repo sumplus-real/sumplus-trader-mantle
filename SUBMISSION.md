@@ -34,6 +34,13 @@ The pitch is not "look at my returns." It is **safe autonomy** — the agent run
 leash holds. Defence in depth: the guardrail self-limits the brain, and the execution layer enforces
 the same policy independently, so the safety property does not depend on the model behaving.
 
+**Who holds the leash:** the user does. The delegating user sets the policy — which pairs, the
+per-trade and drawdown caps, the allocation target — and issues an on-chain delegation that binds it
+server-side. The agent then acts autonomously inside that envelope. Two independent layers enforce
+it: our guardrail in the agent, and the execution layer's delegation check before it ever signs. In
+our live run the brain mis-judged and tried to add exposure; both the policy and the leash held and
+the trade never reached the chain.
+
 ## Why it fits the tracks
 
 - **Trading & Strategy** — a real strategy engine deciding and executing spot swaps on Mantle, with
@@ -88,6 +95,10 @@ nothing installed. Add keys to switch to the real DeepSeek brain and live Mantle
    status panel updates (portfolio, drawdown vs cap, recent decisions with allow/blocked badges).
 3. Type `set cap max_single_trade_usd 10`, then `tick` again — watch the agent's next size get
    clamped live. Type `pause` — the agent stops opening trades. This is supervised autonomy.
+4. **The money shot — real on-chain proof.** Open `live_trail_summary.json` and the two Mantlescan
+   tx pages. "This is the same agent running live on Mantle: it found itself 78% concentrated in MNT,
+   autonomously executed two real rebalancing swaps down to 41%, then tried to over-correct — and the
+   guardrail rejected the off-policy trade. No human in the loop. The leash held on-chain."
 
 ## Tech
 
