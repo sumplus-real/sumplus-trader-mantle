@@ -156,15 +156,19 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
  .tx a{color:#5fb0ff;text-decoration:none} .tx a:hover{text-decoration:underline}
  #panel::-webkit-scrollbar,#log::-webkit-scrollbar{width:8px}
  #panel::-webkit-scrollbar-thumb,#log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
- @keyframes spin{to{transform:rotate(360deg)}}
+ @property --ringA{syntax:"<angle>";inherits:false;initial-value:0deg}
+ @keyframes ringspin{to{--ringA:360deg}}
  .ring{position:relative;height:100%;border-radius:26px}
- .ring::before{content:"";position:absolute;inset:-2.5px;border-radius:28px;z-index:0;background:conic-gradient(from 0deg,#0a84ff,#5b2a9e,#34c759,#ffd60a,#ff9f0a,#ff2d55,#0a84ff);animation:spin 4s linear infinite}
- .ring::after{content:"";position:absolute;inset:-14px;border-radius:38px;z-index:-1;background:conic-gradient(from 0deg,#0a84ff,#5b2a9e,#34c759,#ffd60a,#ff9f0a,#ff2d55,#0a84ff);filter:blur(22px);opacity:.5;animation:spin 4s linear infinite}
- .ring>#panel{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;overflow:hidden}
+ /* colorful light travels AROUND the fixed panel edge: we animate the conic angle, the element never moves/rotates */
+ .ring::before{content:"";position:absolute;inset:0;border-radius:26px;z-index:3;pointer-events:none;
+   padding:3px;background:conic-gradient(from var(--ringA),#0a84ff,#34c759,#ffd60a,#ff9f0a,#ff2d55,#5b2a9e,#0a84ff);
+   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+   animation:ringspin 3s linear infinite}
+ .ring>#panel{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;overflow:hidden;border-color:transparent}
  .pfix{flex:none}
  .pscroll{flex:1;min-height:0;overflow-y:auto;border-top:1px solid rgba(255,255,255,.08);margin-top:12px;padding-top:6px}
- .ring.paused::before,.ring.paused::after{background:#ff453a;animation:none}
- .ring.paused::after{opacity:.35}
+ .ring.paused::before{background:#ff453a;animation:none}
 </style></head><body>
 <div class="wrap">
  <div class="chatcol glass card">
