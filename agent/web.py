@@ -16,9 +16,19 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from agent import chat, ledger, runtime, portfolio
+from agent.guardrail.policy import Guardrail
+from agent.types import Decision
 
+ROOT = Path(__file__).resolve().parent.parent
 app = FastAPI(title="Guardrailed Trading Agent")
-CFG = json.loads((Path(__file__).resolve().parent.parent / "config" / "strategy.json").read_text())
+CFG = json.loads((ROOT / "config" / "strategy.json").read_text())
+
+# The three canonical guardrail scenarios, runnable from the browser (no terminal needed).
+_DEMO_SCENARIOS = [
+    ("In-policy buy", Decision("buy", "mantle", "USDC", "MNT", 25, 0.7, "trend up, small size")),
+    ("Oversized buy", Decision("buy", "mantle", "USDC", "MNT", 5000, 0.9, "very confident, wants to go big")),
+    ("Off-whitelist token", Decision("buy", "mantle", "USDC", "SCAMCOIN", 25, 0.95, "shilled token, looks hot")),
+]
 
 
 class Msg(BaseModel):
@@ -28,6 +38,41 @@ class Msg(BaseModel):
 @app.post("/api/chat")
 async def api_chat(m: Msg):
     return {"reply": await chat.handle(m.message)}
+
+
+@app.get("/api/guardrail-demo")
+async def api_guardrail_demo():
+    """Run the allow / clamp / reject scenarios deterministically, in-browser."""
+    guard = Guardrail(CFG)
+    out = []
+    for name, d in _DEMO_SCENARIOS:
+        v = guard.check(d, portfolio_value_usd=1000.0, drawdown_pct=0.0, trades_last_hour=0)
+        verdict = "rejected" if not v.allowed else ("clamped" if v.clamped_amount_usd is not None else "allowed")
+        out.append({
+            "name": name,
+            "wants": f"{d.side} ${d.amount_usd:g} {d.from_token}->{d.to_token}",
+            "rationale": d.rationale,
+            "verdict": verdict,
+            "reason": v.reason,
+            "allowed": v.allowed,
+        })
+    return {"scenarios": out}
+
+
+@app.get("/api/trail")
+async def api_trail():
+    """The real on-chain decision trail from the live Mantle run (if present)."""
+    p = ROOT / "live_trail_summary.json"
+    extra = ROOT  # noqa
+    proof_tx = "0x889c64321833c1f27c87cacf4d455cfcdf840b14f4deaf49dab915726495cd45"
+    rows = []
+    if p.exists():
+        try:
+            rows = json.loads(p.read_text())
+        except Exception:
+            rows = []
+    return {"trail": rows, "proof_tx": proof_tx,
+            "wallet": "0x5B9687e2F0BF34BBB9e7937488a513BD82A12dD3"}
 
 
 @app.get("/api/state")
@@ -88,18 +133,32 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
  .dec{font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin:6px 0}
  .chips span{display:inline-block;background:#0d1117;border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin:2px;font-size:12px;color:var(--mut)}
  .state{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+ .acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+ button.ghost{background:#0d1117;color:var(--accent);border:1px solid #1f6feb55;font-weight:600}
+ .demo{border:1px solid var(--line);border-radius:10px;padding:10px;background:#0d1117}
+ .demo .c{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+ .demo .c:first-of-type{border-top:0}
+ .pill-clamp{background:#9e6a0322;color:#d29922;border:1px solid #9e6a034d}
+ .tx{font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin:5px 0}
+ .tx a{color:var(--accent);text-decoration:none} .tx a:hover{text-decoration:underline}
 </style></head><body>
 <div class="wrap">
  <div class="chatcol card">
    <h1>Guardrailed Trading Agent</h1>
    <div class="sub">Autonomous. It decides and executes on its own — but it cannot exceed its leash.</div>
+   <div class="acts">
+     <button class="ghost" onclick="runDemo()">▶ Guardrail demo</button>
+     <button class="ghost" onclick="quick('tick')">▶ Tick</button>
+     <button class="ghost" onclick="quick('pause')">Pause</button>
+     <button class="ghost" onclick="quick('resume')">Resume</button>
+   </div>
    <div id="log"></div>
    <div class="inrow">
      <input id="in" placeholder="ask: status · why · pause · resume · tick · set cap max_single_trade_usd 20" autocomplete="off">
      <button onclick="send()">Send</button>
    </div>
  </div>
- <div class="card" id="panel">
+ <div class="card" id="panel" style="overflow-y:auto">
    <div class="row"><b>Status</b><span id="st"></span></div>
    <div class="big" id="pf">—</div><div class="mut">portfolio value</div>
    <div class="row" style="margin-top:14px"><span class="mut">drawdown</span><span id="ddv"></span></div>
@@ -110,6 +169,9 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
    <div id="pairs" class="chips"></div>
    <div class="row" style="margin-top:10px"><b>Recent decisions</b></div>
    <div id="recent"></div>
+   <div class="row" style="margin-top:16px"><b>Live on-chain proof</b><span class="badge pill-ok">Mantle</span></div>
+   <div class="mut" style="font-size:12px;margin-bottom:6px">Real swaps this agent executed on Mantle, with the guardrail rejecting an off-policy trade in the same run.</div>
+   <div id="trail"></div>
  </div>
 </div>
 <script>
@@ -119,6 +181,20 @@ async function send(){const v=document.getElementById('in').value.trim();if(!v)r
  const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:v})});
  const j=await r.json();add(j.reply,'bot');refresh();}
 document.getElementById('in').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+async function quick(cmd){add(cmd,'you');const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:cmd})});const j=await r.json();add(j.reply,'bot');refresh();}
+async function runDemo(){add('run guardrail demo','you');
+ const s=(await (await fetch('/api/guardrail-demo')).json()).scenarios;
+ const pill={allowed:'pill-ok',clamped:'pill-clamp',rejected:'pill-bad'};
+ let h='<div class="demo"><b>Guardrail enforcement — allow / clamp / reject</b>';
+ s.forEach(c=>{h+='<div class="c"><div><div>'+c.name+'</div><div class="mut" style="font-size:12px">'+c.wants+'</div></div><span class="badge '+pill[c.verdict]+'">'+c.verdict+'</span></div>';});
+ h+='<div class="mut" style="font-size:12px;margin-top:8px">No human approved any of this. The leash held.</div></div>';
+ const d=document.createElement('div');d.className='msg bot';d.style.maxWidth='95%';d.innerHTML=h;document.getElementById('log').appendChild(d);document.getElementById('log').scrollTop=1e9;}
+async function loadTrail(){const t=await (await fetch('/api/trail')).json();const el=document.getElementById('trail');let h='';
+ (t.trail||[]).forEach(r=>{const v=r.tx?'<span class="badge pill-ok">executed</span>':(r.guardrail==='rejected'?'<span class="badge pill-bad">rejected</span>':'<span class="badge pill-clamp">'+(r.guardrail||'')+'</span>');
+  const link=r.tx?'<br><a href="'+r.mantlescan+'" target="_blank">'+r.tx.slice(0,18)+'… ↗</a>':'<br><span class="mut">'+(r.guardrail_reason||'')+'</span>';
+  h+='<div class="tx">'+r.side+' '+(r.amount!=null?'~$'+r.amount:'')+' · MNT '+ (r.mnt_allocation_pct!=null?r.mnt_allocation_pct+'%':'') +' '+v+link+'</div>';});
+ if(t.proof_tx){h+='<div class="tx">proof swap 4 MNT→USDC <span class="badge pill-ok">executed</span><br><a href="https://mantlescan.xyz/tx/'+t.proof_tx+'" target="_blank">'+t.proof_tx.slice(0,18)+'… ↗</a></div>';}
+ el.innerHTML=h||'<span class="mut">no trail yet</span>';}
 async function refresh(){const s=await (await fetch('/api/state')).json();
  document.getElementById('st').innerHTML='<span class="state" style="background:'+(s.paused?'#f85149':'#3fb950')+'"></span>'+(s.paused?'PAUSED':'RUNNING');
  document.getElementById('pf').textContent='$'+s.portfolio_usd.toFixed(2);
@@ -127,5 +203,5 @@ async function refresh(){const s=await (await fetch('/api/state')).json();
  document.getElementById('caps').textContent='single ≤ $'+s.caps.max_single_trade_usd+' · pos ≤ '+(s.caps.max_position_pct*100)+'% · ≤ '+s.caps.max_trades_per_hour+'/hr';
  document.getElementById('pairs').innerHTML=s.pairs.map(p=>'<span>'+p+'</span>').join('');
  document.getElementById('recent').innerHTML=s.recent.map(d=>'<div class="dec">'+d.text+' <span class="badge '+(d.allowed?'pill-ok':'pill-bad')+'">'+(d.allowed?'allowed':'blocked')+'</span><br><span class="mut">'+d.reason+'</span></div>').join('')||'<div class="mut">no decisions yet — type \\'tick\\'</div>';}
-add("Hi — I'm an autonomous trading agent. Ask me 'status', 'why', or tell me to 'pause'. Type 'tick' to run a decision cycle.","bot");refresh();setInterval(refresh,4000);
+add("Hi — I'm an autonomous trading agent. Click 'Guardrail demo' to watch the leash hold, or 'Tick' to run a decision cycle. The live on-chain proof is on the right.","bot");refresh();loadTrail();setInterval(refresh,4000);
 </script></body></html>"""
