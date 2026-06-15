@@ -41,11 +41,18 @@ the same policy independently, so the safety property does not depend on the mod
 - **Agentic Economy** — an autonomous agent that acts on-chain under a delegated, enforceable policy.
   This is what makes agent-driven on-chain activity safe enough to scale.
 
-## Deployed on Mantle
+## Deployed on Mantle — live proof
 
-Swaps execute on Mantle (chain 5000) through Agni Finance (Uniswap V3 fork). Token registry and
-router are verified on-chain (WMNT / USDC / USDT). The agent's wallet operates as the on-chain
-actor; an ERC-8004 identity ties that wallet to a registered agent id.
+The agent executed a real swap on Mantle (chain 5000) through Agni Finance (Uniswap V3 fork): the
+agent's wallet swapped 4 MNT into 2.2344 USDC, broadcast and confirmed on-chain.
+
+- **Tx:** `0x889c64321833c1f27c87cacf4d455cfcdf840b14f4deaf49dab915726495cd45`
+- **Mantlescan:** https://mantlescan.xyz/tx/0x889c64321833c1f27c87cacf4d455cfcdf840b14f4deaf49dab915726495cd45
+- **Wallet (on-chain actor):** `0x5B9687e2F0BF34BBB9e7937488a513BD82A12dD3`
+- **Router:** Agni SwapRouter `0x319B69888b0d11cEC22caA5034e25FfFBDc88421` · **In:** 4 MNT (WMNT) · **Out:** 2.2344 USDC
+
+Token registry and router are verified on-chain (WMNT / USDC / USDT). An ERC-8004 identity ties the
+agent's wallet to a registered agent id.
 
 ## Run it (no keys, no network)
 
