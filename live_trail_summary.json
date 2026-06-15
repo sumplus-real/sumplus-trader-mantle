@@ -1,0 +1,67 @@
+[
+  {
+    "tick": 1,
+    "side": "sell",
+    "amount": 3.51,
+    "confidence": 0.9,
+    "mnt_allocation_pct": 77.9,
+    "rationale": "MNT allocation at 77.9% exceeds target 50% by more than 10% band, so sell 6 MNT (~$3.51) to rebalance toward 50/50.",
+    "guardrail": "allowed",
+    "executed": true,
+    "tx": "0x8208a9c72dbf7ccdd32278580017e641534887890b139cfc17748af67a2d3122",
+    "mantlescan": "https://mantlescan.xyz/tx/0x8208a9c72dbf7ccdd32278580017e641534887890b139cfc17748af67a2d3122",
+    "guardrail_reason": "allowed \u2014 within policy"
+  },
+  {
+    "tick": 2,
+    "side": "sell",
+    "amount": 2.92,
+    "confidence": 0.9,
+    "mnt_allocation_pct": 57.6,
+    "rationale": "MNT allocation at 57.6% exceeds target 50% by more than 10% band, so sell 5 MNT (~$2.92) to rebalance toward 50/50.",
+    "guardrail": "allowed",
+    "executed": true,
+    "tx": "0xa2082e729b5b5493326b2ea7d112090bdb9e3663445120bec379a53816ad43ff",
+    "mantlescan": "https://mantlescan.xyz/tx/0xa2082e729b5b5493326b2ea7d112090bdb9e3663445120bec379a53816ad43ff",
+    "guardrail_reason": "allowed \u2014 within policy"
+  },
+  {
+    "tick": 3,
+    "side": "buy",
+    "amount": 2.0,
+    "confidence": 0.8,
+    "mnt_allocation_pct": 40.6,
+    "rationale": "MNT is below target allocation (40.6% vs 50%) by more than the 10% rebalance band, so buying MNT with USDC reduces concentration risk.",
+    "guardrail": "rejected",
+    "executed": null,
+    "tx": null,
+    "mantlescan": null,
+    "guardrail_reason": "rejected: pair USDC->MNT on mantle is not allowed"
+  },
+  {
+    "tick": 4,
+    "side": "buy",
+    "amount": 4.0,
+    "confidence": 0.8,
+    "mnt_allocation_pct": 40.6,
+    "rationale": "Rebalancing: MNT is below target (40.6% vs 50%) by more than 10% band, so buy MNT with USDC up to max trade size.",
+    "guardrail": "rejected",
+    "executed": null,
+    "tx": null,
+    "mantlescan": null,
+    "guardrail_reason": "rejected: pair USDC->MNT on mantle is not allowed"
+  },
+  {
+    "tick": 5,
+    "side": "buy",
+    "amount": 3.5,
+    "confidence": 0.8,
+    "mnt_allocation_pct": 40.6,
+    "rationale": "MNT is below target allocation (40.6% vs 50%) by more than the 10% rebalance band, so buying MNT with USDC reduces concentration risk.",
+    "guardrail": "rejected",
+    "executed": null,
+    "tx": null,
+    "mantlescan": null,
+    "guardrail_reason": "rejected: pair USDC->MNT on mantle is not allowed"
+  }
+]

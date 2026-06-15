@@ -41,18 +41,32 @@ the same policy independently, so the safety property does not depend on the mod
 - **Agentic Economy** — an autonomous agent that acts on-chain under a delegated, enforceable policy.
   This is what makes agent-driven on-chain activity safe enough to scale.
 
-## Deployed on Mantle — live proof
+## Deployed on Mantle — live autonomous run
 
-The agent executed a real swap on Mantle (chain 5000) through Agni Finance (Uniswap V3 fork): the
-agent's wallet swapped 4 MNT into 2.2344 USDC, broadcast and confirmed on-chain.
+The agent ran live on Mantle (chain 5000), driven by DeepSeek V4 under a target-allocation
+rebalancing mandate, executing real swaps through Agni Finance. Every decision is logged in
+`ledger.jsonl` and summarised in `live_trail_summary.json` — an immutable on-chain decision trail.
 
-- **Tx:** `0x889c64321833c1f27c87cacf4d455cfcdf840b14f4deaf49dab915726495cd45`
-- **Mantlescan:** https://mantlescan.xyz/tx/0x889c64321833c1f27c87cacf4d455cfcdf840b14f4deaf49dab915726495cd45
+The wallet started ~78% concentrated in MNT. The agent autonomously decided to de-risk, executed
+two real rebalancing swaps that brought MNT exposure from 77.9% down to ~41%, and then, when it
+tried to over-correct by buying MNT back, the deterministic guardrail hard-rejected the off-whitelist
+pair. The leash held even when the brain wanted to act.
+
+| # | decision | MNT alloc | guardrail | on-chain tx |
+|---|----------|-----------|-----------|-------------|
+| 1 | sell ~$3.5 MNT→USDC | 77.9% | allowed | [`0x8208a9c7…`](https://mantlescan.xyz/tx/0x8208a9c72dbf7ccdd32278580017e641534887890b139cfc17748af67a2d3122) ✅ |
+| 2 | sell ~$2.9 MNT→USDC | 57.6% | allowed | [`0xa2082e72…`](https://mantlescan.xyz/tx/0xa2082e729b5b5493326b2ea7d112090bdb9e3663445120bec379a53816ad43ff) ✅ |
+| 3 | buy MNT (rebalance up) | 40.6% | **rejected** (off-whitelist pair) | — |
+
+Plus a standalone proof swap (4 MNT → 2.2344 USDC):
+[`0x889c6432…`](https://mantlescan.xyz/tx/0x889c64321833c1f27c87cacf4d455cfcdf840b14f4deaf49dab915726495cd45) ✅
+
 - **Wallet (on-chain actor):** `0x5B9687e2F0BF34BBB9e7937488a513BD82A12dD3`
-- **Router:** Agni SwapRouter `0x319B69888b0d11cEC22caA5034e25FfFBDc88421` · **In:** 4 MNT (WMNT) · **Out:** 2.2344 USDC
+- **Router:** Agni SwapRouter `0x319B69888b0d11cEC22caA5034e25FfFBDc88421`
 
-Token registry and router are verified on-chain (WMNT / USDC / USDT). An ERC-8004 identity ties the
-agent's wallet to a registered agent id.
+Three real on-chain swaps, two of them autonomous risk-driven rebalances; the guardrail rejection is
+from the same live run, not a canned demo. An ERC-8004 identity ties the agent's wallet to a
+registered agent id.
 
 ## Run it (no keys, no network)
 

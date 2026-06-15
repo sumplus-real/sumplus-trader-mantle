@@ -67,10 +67,17 @@ async def _live_price(backend) -> dict:
     """Executable MNT->USDC price straight from Maria's quote (falls back gracefully)."""
     try:
         q = await backend.get_quote("mantle", "MNT", "USDC", "1", 100)
+        # amount_out may sit at the top level (mock) or nested under "quote" (live Agni).
+        candidates = [q]
+        if isinstance(q, dict) and isinstance(q.get("quote"), dict):
+            candidates.append(q["quote"])
         out = None
-        for k in ("amount_out", "to_amount", "out_amount", "expected_out", "price"):
-            if isinstance(q, dict) and q.get(k) is not None:
-                out = q[k]; break
+        for src in candidates:
+            for k in ("amount_out", "to_amount", "out_amount", "expected_out", "price"):
+                if isinstance(src, dict) and src.get(k) is not None:
+                    out = src[k]; break
+            if out is not None:
+                break
         return {"source": "maria_quote", "mnt_in_usdc": out, "raw": q}
     except Exception as e:
         return {"source": "unavailable", "mnt_in_usdc": None, "quote_error": str(e)}
@@ -118,9 +125,34 @@ async def main() -> int:
             "live_price": price,
             "wallet_holdings": holdings,
             "allocation_pct": alloc,
-            "note": "You hold real funds. Manage concentration and drawdown risk first.",
+            "strategy_mandate": {
+                "type": "target_allocation_rebalance",
+                "target": {"mnt_pct": 50, "usdc_pct": 50},
+                "rebalance_band_pct": 10,
+                "instruction": (
+                    "Your mandate is to keep the portfolio near the target allocation. If an asset "
+                    "is over its target by more than the rebalance band, trim it toward target with "
+                    "an allowed swap, sized within the policy caps. This is disciplined rebalancing "
+                    "to control concentration and drawdown risk, not short-term market timing."
+                ),
+            },
+            "note": "You hold real funds. Honor the rebalancing mandate; manage concentration and drawdown risk first.",
         }
-        decision = await brain.decide(snapshot, policy)
+        # The brain is a network call (DeepSeek); a transient timeout must not kill the run.
+        decision = None
+        for attempt in range(3):
+            try:
+                decision = await brain.decide(snapshot, policy)
+                break
+            except Exception as e:
+                print(f"        brain retry {attempt+1}/3 after {type(e).__name__}")
+                await asyncio.sleep(3)
+        if decision is None:
+            print(f"[{i+1}/{args.ticks}] skipped — brain unreachable after retries")
+            ledger.record("tick_error", {"error": "brain_unreachable"})
+            if i < args.ticks - 1:
+                await asyncio.sleep(args.spacing)
+            continue
         ledger.record("decision", {"decision": decision.to_dict(), "snapshot": snapshot})
         verdict = guard.check(decision, portfolio_value_usd=1000.0,
                               drawdown_pct=0.0, trades_last_hour=ledger.trades_last_hour())
