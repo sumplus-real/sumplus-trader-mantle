@@ -112,8 +112,9 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
 <style>
  :root{--txt:#eef2f7;--mut:#9aa7b8;--ok:#34c759;--bad:#ff453a;--warn:#ff9f0a;--accent:#0a84ff}
  *{box-sizing:border-box}
+ html{height:100%}
  body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text",Segoe UI,Roboto,sans-serif;color:var(--txt);
-   background:#05070c;min-height:100vh;-webkit-font-smoothing:antialiased;
+   background:#05070c;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;
    background-image:radial-gradient(60vw 60vw at 12% -8%,rgba(27,58,107,.55),transparent 60%),radial-gradient(50vw 50vw at 100% 0%,rgba(91,42,158,.4),transparent 55%),radial-gradient(55vw 55vw at 50% 120%,rgba(14,94,110,.38),transparent 60%);background-attachment:fixed}
  .wrap{display:grid;grid-template-columns:1fr 380px;gap:18px;max-width:1180px;margin:0 auto;padding:22px;height:100vh}
  .glass{background:rgba(255,255,255,.055);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border:1px solid rgba(255,255,255,.10);border-radius:26px;box-shadow:0 20px 60px -20px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.08)}
@@ -122,8 +123,8 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
  .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#0a84ff,#5b2a9e);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;box-shadow:0 4px 14px -2px rgba(10,132,255,.6)}
  h1{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0}
  .sub{color:var(--mut);font-size:13px;margin:6px 0 14px}
- .chatcol{display:flex;flex-direction:column;height:100%}
- #log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+ .chatcol{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden}
+ #log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
  .msg{max-width:82%;padding:11px 14px;border-radius:20px;white-space:pre-wrap;font-size:14px;box-shadow:0 6px 18px -10px rgba(0,0,0,.6)}
  .you{align-self:flex-end;background:linear-gradient(135deg,#0a84ff,#0066d6);color:#fff;border-bottom-right-radius:7px}
  .bot{align-self:flex-start;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);border-bottom-left-radius:7px}
@@ -155,6 +156,15 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
  .tx a{color:#5fb0ff;text-decoration:none} .tx a:hover{text-decoration:underline}
  #panel::-webkit-scrollbar,#log::-webkit-scrollbar{width:8px}
  #panel::-webkit-scrollbar-thumb,#log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
+ @keyframes spin{to{transform:rotate(360deg)}}
+ .ring{position:relative;height:100%;border-radius:26px}
+ .ring::before{content:"";position:absolute;inset:-2.5px;border-radius:28px;z-index:0;background:conic-gradient(from 0deg,#0a84ff,#5b2a9e,#34c759,#ffd60a,#ff9f0a,#ff2d55,#0a84ff);animation:spin 4s linear infinite}
+ .ring::after{content:"";position:absolute;inset:-14px;border-radius:38px;z-index:-1;background:conic-gradient(from 0deg,#0a84ff,#5b2a9e,#34c759,#ffd60a,#ff9f0a,#ff2d55,#0a84ff);filter:blur(22px);opacity:.5;animation:spin 4s linear infinite}
+ .ring>#panel{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;overflow:hidden}
+ .pfix{flex:none}
+ .pscroll{flex:1;min-height:0;overflow-y:auto;border-top:1px solid rgba(255,255,255,.08);margin-top:12px;padding-top:6px}
+ .ring.paused::before,.ring.paused::after{background:#ff453a;animation:none}
+ .ring.paused::after{opacity:.35}
 </style></head><body>
 <div class="wrap">
  <div class="chatcol glass card">
@@ -172,20 +182,26 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
      <button onclick="send()">Send</button>
    </div>
  </div>
- <div class="glass card" id="panel" style="overflow-y:auto">
-   <div class="row"><b>Status</b><span id="st"></span></div>
-   <div class="big" id="pf">—</div><div class="mut">portfolio value</div>
-   <div class="row" style="margin-top:16px"><span class="mut">drawdown</span><span id="ddv"></span></div>
-   <div class="bar"><i id="ddbar" style="width:0%"></i></div>
-   <div class="row" style="margin-top:16px"><span class="mut">caps</span></div>
-   <div id="caps" class="mut" style="font-size:13px"></div>
-   <div class="row" style="margin-top:12px"><span class="mut">pairs</span></div>
-   <div id="pairs" class="chips"></div>
-   <div class="row" style="margin-top:18px"><b>Recent decisions</b></div>
-   <div id="recent"></div>
-   <div class="row" style="margin-top:20px"><b>Live on-chain proof</b><span class="badge pill-ok">Mantle</span></div>
-   <div class="mut" style="font-size:12px;margin-bottom:8px">Real swaps this agent executed on Mantle, with the guardrail rejecting an off-policy trade in the same run.</div>
-   <div id="trail"></div>
+ <div class="ring">
+ <div class="glass card" id="panel">
+   <div class="pfix">
+     <div class="row"><b>Status</b><span id="st"></span></div>
+     <div class="big" id="pf">—</div><div class="mut">portfolio value</div>
+     <div class="row" style="margin-top:14px"><span class="mut">drawdown</span><span id="ddv"></span></div>
+     <div class="bar"><i id="ddbar" style="width:0%"></i></div>
+     <div class="row" style="margin-top:14px"><span class="mut">caps</span></div>
+     <div id="caps" class="mut" style="font-size:13px"></div>
+     <div class="row" style="margin-top:10px"><span class="mut">pairs</span></div>
+     <div id="pairs" class="chips"></div>
+   </div>
+   <div class="pscroll">
+     <div class="row" style="margin-top:6px"><b>Recent decisions</b></div>
+     <div id="recent"></div>
+     <div class="row" style="margin-top:18px"><b>Live on-chain proof</b><span class="badge pill-ok">Mantle</span></div>
+     <div class="mut" style="font-size:12px;margin-bottom:8px">Real swaps this agent executed on Mantle, with the guardrail rejecting an off-policy trade in the same run.</div>
+     <div id="trail"></div>
+   </div>
+ </div>
  </div>
 </div>
 <script>
@@ -211,6 +227,7 @@ async function loadTrail(){const t=await (await fetch('/api/trail')).json();cons
  el.innerHTML=h||'<span class="mut">no trail yet</span>';}
 async function refresh(){const s=await (await fetch('/api/state')).json();
  document.getElementById('st').innerHTML='<span class="state" style="background:'+(s.paused?'#f85149':'#3fb950')+'"></span>'+(s.paused?'PAUSED':'RUNNING');
+ document.getElementById('panel').parentElement.classList.toggle('paused',s.paused);
  document.getElementById('pf').textContent='$'+s.portfolio_usd.toFixed(2);
  document.getElementById('ddv').textContent=s.drawdown_pct.toFixed(2)+'% / cap '+s.max_drawdown_pct+'%';
  document.getElementById('ddbar').style.width=Math.min(100,s.drawdown_pct/s.max_drawdown_pct*100)+'%';
