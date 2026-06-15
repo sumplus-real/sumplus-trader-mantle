@@ -86,19 +86,23 @@ python -m agent.cli tick     # one autonomous decision cycle
 Ships with an offline mock brain and mock execution backend so anyone can run the full agent with
 nothing installed. Add keys to switch to the real DeepSeek brain and live Mantle execution.
 
-## Demo script (90 seconds)
+## Demo script (90 seconds — entirely in the browser)
 
-1. `python -m agent.cli demo` — show three decisions: an in-policy buy is **allowed**, an oversized
+Run `python -m agent.cli web` once and open `http://127.0.0.1:8800`. Everything below is clicks on
+that one page; no terminal.
+
+1. Click **▶ Guardrail demo** — three decisions render: an in-policy buy is **allowed**, an oversized
    buy is **clamped** to the cap, a shilled off-whitelist token is **rejected**. "No human approved
    any of this. The leash held."
-2. `python -m agent.cli web` — open the page. Type `tick`: the agent makes a real decision, the
-   status panel updates (portfolio, drawdown vs cap, recent decisions with allow/blocked badges).
-3. Type `set cap max_single_trade_usd 10`, then `tick` again — watch the agent's next size get
-   clamped live. Type `pause` — the agent stops opening trades. This is supervised autonomy.
-4. **The money shot — real on-chain proof.** Open `live_trail_summary.json` and the two Mantlescan
-   tx pages. "This is the same agent running live on Mantle: it found itself 78% concentrated in MNT,
-   autonomously executed two real rebalancing swaps down to 41%, then tried to over-correct — and the
-   guardrail rejected the off-policy trade. No human in the loop. The leash held on-chain."
+2. Click **▶ Tick** — the agent makes a decision; the status panel updates (portfolio, drawdown vs
+   cap, recent decisions with allow/blocked badges). Type `set cap max_single_trade_usd 10` in the
+   box, click Tick again — the next size is clamped live. Click **Pause** — it stops opening trades.
+   Supervised autonomy in plain language.
+3. **The money shot — real on-chain proof (right panel).** The "Live on-chain proof" panel lists the
+   real swaps this agent executed on Mantle, each linking to Mantlescan. "Same agent, running live:
+   it found itself 78% concentrated in MNT, autonomously executed two real rebalancing swaps down to
+   41%, then tried to over-correct — and the guardrail rejected the off-policy trade. No human in the
+   loop. The leash held on-chain." Click a Mantlescan link to show the confirmed transaction.
 
 ## Tech
 
