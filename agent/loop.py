@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,10 @@ from agent.execution.executor import Executor
 from agent.execution.factory import make_backend
 from agent.guardrail.policy import Guardrail
 
-CFG_PATH = Path(__file__).resolve().parent.parent / "config" / "strategy.json"
+# Default to the committed strategy config; allow an alternate profile via STRATEGY_CONFIG
+# (e.g. a live-execution profile) without touching the demo's source-of-truth config.
+_DEFAULT_CFG = Path(__file__).resolve().parent.parent / "config" / "strategy.json"
+CFG_PATH = Path(os.environ.get("STRATEGY_CONFIG", _DEFAULT_CFG))
 STRATEGY_CFG = json.loads(CFG_PATH.read_text())
 
 
