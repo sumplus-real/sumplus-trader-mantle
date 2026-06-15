@@ -110,42 +110,56 @@ async def index():
 _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed Trading Agent</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
- :root{--bg:#0b0e14;--panel:#141a24;--line:#222c3a;--txt:#e6edf3;--mut:#8b98a9;--ok:#3fb950;--bad:#f85149;--accent:#58a6ff}
- *{box-sizing:border-box} body{margin:0;font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
- .wrap{display:grid;grid-template-columns:1fr 360px;gap:16px;max-width:1100px;margin:0 auto;padding:20px;height:100vh}
- h1{font-size:18px;margin:0 0 4px} .sub{color:var(--mut);font-size:13px;margin-bottom:12px}
- .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
- #log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+ :root{--txt:#eef2f7;--mut:#9aa7b8;--ok:#34c759;--bad:#ff453a;--warn:#ff9f0a;--accent:#0a84ff}
+ *{box-sizing:border-box}
+ body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text",Segoe UI,Roboto,sans-serif;color:var(--txt);
+   background:#05070c;min-height:100vh;-webkit-font-smoothing:antialiased;
+   background-image:radial-gradient(60vw 60vw at 12% -8%,rgba(27,58,107,.55),transparent 60%),radial-gradient(50vw 50vw at 100% 0%,rgba(91,42,158,.4),transparent 55%),radial-gradient(55vw 55vw at 50% 120%,rgba(14,94,110,.38),transparent 60%);background-attachment:fixed}
+ .wrap{display:grid;grid-template-columns:1fr 380px;gap:18px;max-width:1180px;margin:0 auto;padding:22px;height:100vh}
+ .glass{background:rgba(255,255,255,.055);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border:1px solid rgba(255,255,255,.10);border-radius:26px;box-shadow:0 20px 60px -20px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.08)}
+ .card{padding:20px}
+ .hd{display:flex;align-items:center;gap:10px}
+ .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#0a84ff,#5b2a9e);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;box-shadow:0 4px 14px -2px rgba(10,132,255,.6)}
+ h1{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0}
+ .sub{color:var(--mut);font-size:13px;margin:6px 0 14px}
  .chatcol{display:flex;flex-direction:column;height:100%}
- .msg{max-width:80%;padding:9px 12px;border-radius:12px;white-space:pre-wrap}
- .you{align-self:flex-end;background:#1f6feb22;border:1px solid #1f6feb55}
- .bot{align-self:flex-start;background:#161b22;border:1px solid var(--line)}
- .inrow{display:flex;gap:8px;margin-top:12px}
- input{flex:1;background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:10px}
- button{background:var(--accent);color:#06101f;border:0;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer}
- .row{display:flex;justify-content:space-between;margin:6px 0;font-size:14px}
- .mut{color:var(--mut)} .big{font-size:22px;font-weight:700}
- .badge{font-size:11px;padding:2px 7px;border-radius:20px}
- .pill-ok{background:#23863622;color:var(--ok);border:1px solid #2386364d}
- .pill-bad{background:#da363322;color:var(--bad);border:1px solid #da36334d}
- .bar{height:8px;background:#0d1117;border-radius:6px;overflow:hidden;margin-top:4px}
- .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#d29922,var(--bad))}
- .dec{font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin:6px 0}
- .chips span{display:inline-block;background:#0d1117;border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin:2px;font-size:12px;color:var(--mut)}
- .state{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
- .acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
- button.ghost{background:#0d1117;color:var(--accent);border:1px solid #1f6feb55;font-weight:600}
- .demo{border:1px solid var(--line);border-radius:10px;padding:10px;background:#0d1117}
- .demo .c{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+ #log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+ .msg{max-width:82%;padding:11px 14px;border-radius:20px;white-space:pre-wrap;font-size:14px;box-shadow:0 6px 18px -10px rgba(0,0,0,.6)}
+ .you{align-self:flex-end;background:linear-gradient(135deg,#0a84ff,#0066d6);color:#fff;border-bottom-right-radius:7px}
+ .bot{align-self:flex-start;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);border-bottom-left-radius:7px}
+ .inrow{display:flex;gap:10px;margin-top:14px}
+ input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt);border-radius:16px;padding:12px 14px;font-size:14px;outline:none}
+ input:focus{border-color:rgba(10,132,255,.6);box-shadow:0 0 0 4px rgba(10,132,255,.15)}
+ input::placeholder{color:#6b7686}
+ button{background:linear-gradient(135deg,#0a84ff,#0066d6);color:#fff;border:0;border-radius:16px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:transform .12s,filter .12s}
+ button:hover{filter:brightness(1.08)} button:active{transform:scale(.97)}
+ button.ghost{background:rgba(255,255,255,.07);color:var(--txt);border:1px solid rgba(255,255,255,.14);padding:9px 14px;border-radius:14px;font-weight:500}
+ button.ghost:hover{background:rgba(255,255,255,.13)}
+ .acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+ .row{display:flex;justify-content:space-between;align-items:center;margin:7px 0;font-size:14px}
+ .mut{color:var(--mut)} .big{font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+ .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+ .pill-ok{background:rgba(52,199,89,.16);color:#5ee47e;border:1px solid rgba(52,199,89,.3)}
+ .pill-bad{background:rgba(255,69,58,.16);color:#ff7b72;border:1px solid rgba(255,69,58,.3)}
+ .pill-clamp{background:rgba(255,159,10,.16);color:#ffc266;border:1px solid rgba(255,159,10,.3)}
+ .bar{height:9px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;margin-top:6px}
+ .bar>i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#34c759,#ffd60a,#ff453a)}
+ .dec{font-size:13px;padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;margin:7px 0}
+ .chips span{display:inline-block;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3px 11px;margin:3px 3px 0 0;font-size:12px;color:var(--mut)}
+ .state{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;animation:pulse 2s infinite}
+ @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,199,89,.5)}70%{box-shadow:0 0 0 7px rgba(52,199,89,0)}100%{box-shadow:0 0 0 0 rgba(52,199,89,0)}}
+ .demo{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px 14px}
+ .demo .c{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,.07)}
  .demo .c:first-of-type{border-top:0}
- .pill-clamp{background:#9e6a0322;color:#d29922;border:1px solid #9e6a034d}
- .tx{font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin:5px 0}
- .tx a{color:var(--accent);text-decoration:none} .tx a:hover{text-decoration:underline}
+ .tx{font-size:12px;padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;margin:6px 0}
+ .tx a{color:#5fb0ff;text-decoration:none} .tx a:hover{text-decoration:underline}
+ #panel::-webkit-scrollbar,#log::-webkit-scrollbar{width:8px}
+ #panel::-webkit-scrollbar-thumb,#log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
 </style></head><body>
 <div class="wrap">
- <div class="chatcol card">
-   <h1>Guardrailed Trading Agent</h1>
-   <div class="sub">Autonomous. It decides and executes on its own — but it cannot exceed its leash.</div>
+ <div class="chatcol glass card">
+   <div class="hd"><span class="logo">S</span><h1>Sumplus Trader</h1><span class="badge pill-ok" style="margin-left:auto">autonomous</span></div>
+   <div class="sub">It decides and executes on its own — but it cannot exceed its leash.</div>
    <div class="acts">
      <button class="ghost" onclick="runDemo()">▶ Guardrail demo</button>
      <button class="ghost" onclick="quick('tick')">▶ Tick</button>
@@ -154,23 +168,23 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Guardrailed T
    </div>
    <div id="log"></div>
    <div class="inrow">
-     <input id="in" placeholder="ask: status · why · pause · resume · tick · set cap max_single_trade_usd 20" autocomplete="off">
+     <input id="in" placeholder="ask: status · why · pause · tick · set cap max_single_trade_usd 20" autocomplete="off">
      <button onclick="send()">Send</button>
    </div>
  </div>
- <div class="card" id="panel" style="overflow-y:auto">
+ <div class="glass card" id="panel" style="overflow-y:auto">
    <div class="row"><b>Status</b><span id="st"></span></div>
    <div class="big" id="pf">—</div><div class="mut">portfolio value</div>
-   <div class="row" style="margin-top:14px"><span class="mut">drawdown</span><span id="ddv"></span></div>
+   <div class="row" style="margin-top:16px"><span class="mut">drawdown</span><span id="ddv"></span></div>
    <div class="bar"><i id="ddbar" style="width:0%"></i></div>
-   <div class="row" style="margin-top:14px"><span class="mut">caps</span></div>
+   <div class="row" style="margin-top:16px"><span class="mut">caps</span></div>
    <div id="caps" class="mut" style="font-size:13px"></div>
-   <div class="row" style="margin-top:10px"><span class="mut">pairs</span></div>
+   <div class="row" style="margin-top:12px"><span class="mut">pairs</span></div>
    <div id="pairs" class="chips"></div>
-   <div class="row" style="margin-top:10px"><b>Recent decisions</b></div>
+   <div class="row" style="margin-top:18px"><b>Recent decisions</b></div>
    <div id="recent"></div>
-   <div class="row" style="margin-top:16px"><b>Live on-chain proof</b><span class="badge pill-ok">Mantle</span></div>
-   <div class="mut" style="font-size:12px;margin-bottom:6px">Real swaps this agent executed on Mantle, with the guardrail rejecting an off-policy trade in the same run.</div>
+   <div class="row" style="margin-top:20px"><b>Live on-chain proof</b><span class="badge pill-ok">Mantle</span></div>
+   <div class="mut" style="font-size:12px;margin-bottom:8px">Real swaps this agent executed on Mantle, with the guardrail rejecting an off-policy trade in the same run.</div>
    <div id="trail"></div>
  </div>
 </div>
